@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDFShock — Compress PDF</title>
+  <style>
+    :root {
+      --bg: #0a0e1c; --surface: #121a33; --surface-hover: #16204a;
+      --border: #2c3a66; --border-soft: #202c52;
+      --text: #e7ecfb; --text-muted: #93a0c9; --text-dim: #5c6690;
+      --accent: #4f9dff; --accent-hover: #6babff; --accent-cyan: #9fe8ff;
+      --danger-bg: #3a1620; --danger-text: #ff9fb0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: radial-gradient(ellipse at top, #121a3a, var(--bg) 60%);
+      color: var(--text); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+      display: flex; justify-content: center; padding: 64px 16px;
+    }
+    main { width: 100%; max-width: 560px; }
+    h1 { font-size: 32px; margin: 0 0 6px; letter-spacing: -0.02em; }
+    h1 span { color: var(--accent-cyan); }
+    .lede { color: var(--text-muted); margin: 0 0 32px; }
+    .drop {
+      display: block;
+      border: 1.5px dashed var(--border); border-radius: 14px; background: var(--surface);
+      padding: 40px 20px; text-align: center; cursor: pointer; transition: .15s;
+    }
+    .drop:hover, .drop.over { border-color: var(--accent); background: var(--surface-hover); }
+    .drop strong { display: block; font-size: 17px; margin-bottom: 4px; }
+    .drop small { color: var(--text-dim); }
+    .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0; }
+    .presets label {
+      border: 1px solid var(--border-soft); border-radius: 10px; padding: 10px; cursor: pointer;
+      background: var(--surface); text-align: center;
+    }
+    .presets input { display: none; }
+    .presets label:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+    .presets b { display: block; font-size: 14px; }
+    .presets span { font-size: 12px; color: var(--text-muted); }
+    .panel { background: var(--surface); border: 1px solid var(--border-soft); border-radius: 14px; padding: 18px; margin-top: 16px; }
+    .bar { height: 6px; background: var(--border-soft); border-radius: 3px; overflow: hidden; margin-top: 10px; }
+    .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-cyan)); transition: width .2s; }
+    .sizes { display: flex; align-items: baseline; gap: 10px; font-size: 22px; font-weight: 600; }
+    .sizes s { color: var(--text-dim); font-weight: 400; font-size: 17px; }
+    .gain { color: var(--accent-cyan); }
+    .meta { color: var(--text-muted); font-size: 13px; margin: 4px 0 14px; }
+    button, a.btn {
+      appearance: none; border: 0; border-radius: 10px; padding: 11px 18px; font: inherit; font-weight: 600;
+      background: var(--accent); color: #fff; cursor: pointer; text-decoration: none; display: inline-block;
+    }
+    button:hover, a.btn:hover { background: var(--accent-hover); }
+    .error { background: var(--danger-bg); color: var(--danger-text); border-color: transparent; }
+    .privacy { color: var(--text-dim); font-size: 13px; margin-top: 24px; text-align: center; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>PDF<span>Shock</span></h1>
+    <p class="lede">Shrink heavy PDFs from Figma, Canva or Keynote. Text and vectors stay sharp.</p>
+
+    <div class="presets">
+      <label><input type="radio" name="preset" value="HIGH" /><b>High quality</b><span>Print, zoom</span></label>
+      <label><input type="radio" name="preset" value="BALANCED" checked /><b>Balanced</b><span>Email, sharing</span></label>
+      <label><input type="radio" name="preset" value="SMALL" /><b>Smallest</b><span>Upload limits</span></label>
+    </div>
+
+    <label class="drop" id="drop">
+      <input type="file" id="file" accept="application/pdf" hidden />
+      <strong>Drop a PDF here</strong>
+      <small>or click to choose a file</small>
+    </label>
+
+    <div class="panel" id="progress" hidden>
+      <div id="status">Loading…</div>
+      <div class="bar"><i id="bar"></i></div>
+    </div>
+
+    <div class="panel" id="result" hidden>
+      <div class="sizes"><s id="before"></s><span id="after"></span><span class="gain" id="gain"></span></div>
+      <div class="meta" id="meta"></div>
+      <a class="btn" id="download">Download PDF</a>
+    </div>
+
+    <div class="panel error" id="error" hidden></div>
+
+    <p class="privacy">Your file never leaves your computer. Everything runs in your browser.</p>
+  </main>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

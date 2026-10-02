@@ -1,0 +1,19 @@
+{
+  "name": "pdfshock-web",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/run.mjs",
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "mupdf": "^1.28.1",
+    "vite": "^8.3.2"
+  }
+}
