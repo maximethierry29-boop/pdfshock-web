@@ -53,6 +53,7 @@
     button:hover, a.btn:hover { background: var(--accent-hover); }
     .error { background: var(--danger-bg); color: var(--danger-text); border-color: transparent; }
     .privacy { color: var(--text-dim); font-size: 13px; margin-top: 24px; text-align: center; }
+    .privacy a { color: var(--text-muted); }
     [hidden] { display: none !important; }
   </style>
 </head>
@@ -87,6 +88,7 @@
     <div class="panel error" id="error" hidden></div>
 
     <p class="privacy">Your file never leaves your computer. Everything runs in your browser.</p>
+    <p class="privacy">Powered by <a href="https://mupdf.com">MuPDF</a> · <a href="https://github.com/maximethierry29-boop/pdfshock-web">Source code</a> (AGPL-3.0)</p>
   </main>
   <script type="module" src="/src/main.js"></script>
 </body>

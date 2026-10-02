@@ -6,11 +6,12 @@
   "scripts": {
     "test": "node test/run.mjs",
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "dependencies": {
     "mupdf": "^1.28.1",
