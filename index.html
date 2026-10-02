@@ -65,10 +65,21 @@
     .privacy { color: var(--text-dim); font-size: 13px; margin-top: 24px; text-align: center; }
     .privacy + .privacy { margin-top: 8px; }
     .privacy a { color: var(--text-muted); }
+    /* Habillage des marges (pixel art généré par npm run skin) : purement décoratif, fondu vers le centre. */
+    .skin {
+      position: fixed; top: 0; bottom: 0; width: calc(50vw - 330px); z-index: 0; pointer-events: none;
+      background: center bottom / cover no-repeat; image-rendering: pixelated;
+    }
+    .skin-left { left: 0; background-image: url("/skin-left.png"); mask-image: linear-gradient(to right, #000 72%, transparent); }
+    .skin-right { right: 0; background-image: url("/skin-right.png"); mask-image: linear-gradient(to left, #000 72%, transparent); }
+    main { position: relative; z-index: 1; }
+    @media (max-width: 1279px) { .skin { display: none; } }
     [hidden] { display: none !important; }
   </style>
 </head>
 <body>
+  <div class="skin skin-left" aria-hidden="true"></div>
+  <div class="skin skin-right" aria-hidden="true"></div>
   <main>
     <h1><img src="/logo.png" alt="" width="48" height="48" /><span>PDF<b>Shock</b></span></h1>
     <p class="lede">Shrink heavy PDFs from Figma, Canva or Keynote. Text and vectors stay sharp.</p>

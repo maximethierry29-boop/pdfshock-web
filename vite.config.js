@@ -4,9 +4,5 @@ import { defineConfig } from "vite";
 export default defineConfig({
   optimizeDeps: { exclude: ["mupdf"] },
   worker: { format: "es" },
-  build: {
-    target: "esnext",
-    // wizard.html : habillage de test, construit à côté de la page principale.
-    rollupOptions: { input: { main: "index.html", wizard: "wizard.html" } },
-  },
+  build: { target: "esnext" },
 });
