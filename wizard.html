@@ -15,13 +15,21 @@
     }
     * { box-sizing: border-box; }
     body {
-      margin: 0; min-height: 100vh; background: var(--sky); color: var(--text);
+      margin: 0; min-height: 100vh; color: var(--text);
+      background: linear-gradient(#0c0912, #050308 40%);
       font: 18px/1.4 "Pixelify Sans", ui-monospace, monospace;
       font-variant-ligatures: none;
-      display: flex; justify-content: center; padding: 32px 16px 48px;
+    }
+    /* Illustration 320 × 180 agrandie sans lissage : les pixels restent nets. */
+    .hero { position: relative; }
+    .art {
+      position: relative; height: min(56.25vw, 78vh); min-height: 320px;
+      background: #0c0912 url("/bg-wizard.png") center 35% / cover no-repeat;
       image-rendering: pixelated;
     }
-    main { width: 100%; max-width: 640px; }
+    .art::after { content: ""; position: absolute; inset: auto 0 0; height: 24%; background: linear-gradient(transparent, #0c0912); }
+    .title { position: absolute; left: max(16px, 4vw); bottom: 7%; z-index: 1; max-width: 46%; }
+    main { width: 100%; max-width: 640px; margin: 0 auto; padding: 32px 16px 48px; }
 
     /* Bordure pixel : coins crantés obtenus par quatre ombres pleines, sans border. */
     .px {
@@ -32,38 +40,9 @@
         0 calc(2 * var(--px)) 0 0 rgba(0, 0, 0, .45), var(--px) var(--px) 0 0 rgba(0, 0, 0, .45);
     }
 
-    #scene { margin-bottom: 28px; padding: 0; overflow: hidden; }
-    #scene svg { display: block; width: 100%; height: auto; }
-    .sky { fill: #160f38; }
-    .sky-glow { fill: #6b3fd1; opacity: 0; }
-    .star { fill: #c9c2e8; }
-    .twinkle { animation: twinkle 1.6s steps(1) infinite; }
-    @keyframes twinkle { 50% { opacity: .2; } }
-    .wizard { animation: bob 1.2s steps(1) infinite; }
-    @keyframes bob { 50% { transform: translateY(-1px); } }
-    .orb-glow { fill: var(--cyan); opacity: .25; animation: orb 0.8s steps(1) infinite; }
-    @keyframes orb { 50% { opacity: .5; } }
-    .doc { transition: transform .6s steps(4); }
-    .sparkle, .puff { opacity: 0; }
-    .bubble { font: 700 7px "Pixelify Sans", monospace; fill: var(--bolt); paint-order: stroke; stroke: var(--ink); stroke-width: 1.5px; }
-
-    body[data-state="working"] .sky-glow { animation: glow .5s steps(1) infinite; }
-    @keyframes glow { 50% { opacity: .12; } }
-    body[data-state="working"] .orb-glow { opacity: .8; animation: none; }
-    body[data-state="working"] .doc { animation: shake .18s steps(1) infinite; }
-    @keyframes shake { 33% { transform: translateX(-1px); } 66% { transform: translateX(1px); } }
-    body[data-state="done"] .doc { transform: scale(.55); }
-    body[data-state="done"] .sparkle { animation: sparkle 1s steps(1) 2; }
-    @keyframes sparkle { 0%, 60% { opacity: 1; } 61% { opacity: 0; } }
-    body[data-state="error"] .puff { animation: puff 1.2s steps(3) forwards; }
-    @keyframes puff { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-6px); } }
-    @media (prefers-reduced-motion: reduce) {
-      .wizard, .twinkle, .orb-glow, body[data-state] .doc, body[data-state] .sky-glow { animation: none !important; }
-    }
-
-    h1 { font-size: 44px; line-height: 1; margin: 0 0 8px; letter-spacing: 1px; text-shadow: 4px 4px 0 var(--ink); }
+    h1 { font-size: clamp(36px, 6vw, 72px); line-height: 1; margin: 0 0 8px; letter-spacing: 1px; text-shadow: 4px 4px 0 var(--ink); }
     h1 b { color: var(--bolt); }
-    .lede { color: var(--muted); margin: 0 0 28px; }
+    .lede { color: #d9d0ff; margin: 0; text-shadow: 2px 2px 0 var(--ink); }
 
     .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 0 0 24px; }
     .presets label { padding: 12px 8px; cursor: pointer; text-align: center; }
@@ -98,8 +77,9 @@
     .privacy a { color: var(--muted); }
     [hidden] { display: none !important; }
 
-    @media (max-width: 520px) {
-      h1 { font-size: 34px; }
+    @media (max-width: 640px) {
+      .art { min-height: 280px; background-position: 58% 35%; }
+      .title { position: relative; left: auto; bottom: auto; max-width: none; padding: 0 16px; margin-top: -28px; }
       .presets { gap: 12px; }
       .presets b { font-size: 17px; }
       .presets span { font-size: 12px; }
@@ -107,11 +87,14 @@
   </style>
 </head>
 <body>
+  <header class="hero">
+    <div class="art" role="img" aria-label="A pixel art wizard on a rocky peak summons lightning that strikes a PDF file"></div>
+    <div class="title">
+      <h1>PDF<b>Shock</b></h1>
+      <p class="lede">Your PDF is too heavy. The wizard will fix that. Text and vectors survive the blast.</p>
+    </div>
+  </header>
   <main>
-    <div class="px" id="scene"></div>
-
-    <h1>PDF<b>Shock</b></h1>
-    <p class="lede">Your PDF is too heavy. The wizard will fix that. Text and vectors survive the blast.</p>
 
     <div class="presets">
       <label class="px"><input type="radio" name="preset" value="HIGH" /><b>Spark</b><span>High quality</span></label>

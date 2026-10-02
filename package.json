@@ -7,7 +7,8 @@
     "test": "node test/run.mjs",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "bg": "node scripts/bg-wizard.mjs"
   },
   "keywords": [],
   "author": "",
