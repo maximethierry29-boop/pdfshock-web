@@ -7,6 +7,8 @@ let downloadUrl;
 
 function show(panel) {
   for (const id of ["progress", "result", "error"]) $(id).hidden = id !== panel;
+  // Les habillages (wizard.html) animent leur scène à partir de cet état.
+  document.body.dataset.state = { progress: "working", result: "done", error: "error" }[panel];
 }
 
 async function handle(file) {

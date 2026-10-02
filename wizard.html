@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDFShock — The PDF Wizard</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <style>
+    :root {
+      --sky: #120c2b; --ink: #05030f;
+      --panel: #231a5c; --panel-hi: #2f2478; --line: #4b3ca8;
+      --text: #f4f1ff; --muted: #a99ee6; --dim: #7468b8;
+      --bolt: #ffe14d; --cyan: #9fe8ff; --red: #e8384f;
+      --px: 4px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: var(--sky); color: var(--text);
+      font: 18px/1.4 "Pixelify Sans", ui-monospace, monospace;
+      font-variant-ligatures: none;
+      display: flex; justify-content: center; padding: 32px 16px 48px;
+      image-rendering: pixelated;
+    }
+    main { width: 100%; max-width: 640px; }
+
+    /* Bordure pixel : coins crantés obtenus par quatre ombres pleines, sans border. */
+    .px {
+      background: var(--panel);
+      box-shadow:
+        0 calc(-1 * var(--px)) 0 0 var(--ink), 0 var(--px) 0 0 var(--ink),
+        calc(-1 * var(--px)) 0 0 0 var(--ink), var(--px) 0 0 0 var(--ink),
+        0 calc(2 * var(--px)) 0 0 rgba(0, 0, 0, .45), var(--px) var(--px) 0 0 rgba(0, 0, 0, .45);
+    }
+
+    #scene { margin-bottom: 28px; padding: 0; overflow: hidden; }
+    #scene svg { display: block; width: 100%; height: auto; }
+    .sky { fill: #160f38; }
+    .sky-glow { fill: #6b3fd1; opacity: 0; }
+    .star { fill: #c9c2e8; }
+    .twinkle { animation: twinkle 1.6s steps(1) infinite; }
+    @keyframes twinkle { 50% { opacity: .2; } }
+    .wizard { animation: bob 1.2s steps(1) infinite; }
+    @keyframes bob { 50% { transform: translateY(-1px); } }
+    .orb-glow { fill: var(--cyan); opacity: .25; animation: orb 0.8s steps(1) infinite; }
+    @keyframes orb { 50% { opacity: .5; } }
+    .doc { transition: transform .6s steps(4); }
+    .sparkle, .puff { opacity: 0; }
+    .bubble { font: 700 7px "Pixelify Sans", monospace; fill: var(--bolt); paint-order: stroke; stroke: var(--ink); stroke-width: 1.5px; }
+
+    body[data-state="working"] .sky-glow { animation: glow .5s steps(1) infinite; }
+    @keyframes glow { 50% { opacity: .12; } }
+    body[data-state="working"] .orb-glow { opacity: .8; animation: none; }
+    body[data-state="working"] .doc { animation: shake .18s steps(1) infinite; }
+    @keyframes shake { 33% { transform: translateX(-1px); } 66% { transform: translateX(1px); } }
+    body[data-state="done"] .doc { transform: scale(.55); }
+    body[data-state="done"] .sparkle { animation: sparkle 1s steps(1) 2; }
+    @keyframes sparkle { 0%, 60% { opacity: 1; } 61% { opacity: 0; } }
+    body[data-state="error"] .puff { animation: puff 1.2s steps(3) forwards; }
+    @keyframes puff { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-6px); } }
+    @media (prefers-reduced-motion: reduce) {
+      .wizard, .twinkle, .orb-glow, body[data-state] .doc, body[data-state] .sky-glow { animation: none !important; }
+    }
+
+    h1 { font-size: 44px; line-height: 1; margin: 0 0 8px; letter-spacing: 1px; text-shadow: 4px 4px 0 var(--ink); }
+    h1 b { color: var(--bolt); }
+    .lede { color: var(--muted); margin: 0 0 28px; }
+
+    .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 0 0 24px; }
+    .presets label { padding: 12px 8px; cursor: pointer; text-align: center; }
+    .presets input { position: absolute; opacity: 0; }
+    .presets b { display: block; font-size: 20px; }
+    .presets span { font-size: 14px; color: var(--muted); }
+    .presets label:has(input:checked) { background: var(--panel-hi); color: var(--bolt); }
+    .presets label:has(input:focus-visible) { outline: 2px dashed var(--cyan); outline-offset: 6px; }
+
+    .drop { display: block; padding: 36px 20px; text-align: center; cursor: pointer; background: #1b1450; }
+    .drop strong { display: block; font-size: 24px; margin-bottom: 4px; }
+    .drop small { color: var(--dim); font-size: 15px; }
+    .drop:hover, .drop.over { background: var(--panel-hi); }
+    .drop:hover strong, .drop.over strong { color: var(--bolt); }
+
+    .panel { padding: 18px; margin-top: 24px; }
+    .bar { height: 12px; background: var(--ink); margin-top: 10px; padding: 2px; }
+    .bar i { display: block; height: 100%; width: 0; background: repeating-linear-gradient(90deg, var(--bolt) 0 8px, #ffb800 8px 12px); transition: width .2s steps(6); }
+    .sizes { display: flex; align-items: baseline; gap: 12px; font-size: 28px; font-weight: 700; flex-wrap: wrap; }
+    .sizes s { color: var(--dim); font-weight: 400; font-size: 20px; }
+    .gain { color: var(--bolt); }
+    .meta { color: var(--muted); font-size: 15px; margin: 4px 0 16px; }
+    a.btn {
+      display: inline-block; padding: 10px 18px; background: var(--bolt); color: var(--ink); font-weight: 700;
+      text-decoration: none; box-shadow: 0 4px 0 0 #b8860b, 4px 4px 0 0 var(--ink);
+    }
+    a.btn:hover { background: #fff07a; }
+    a.btn:active { transform: translateY(4px); box-shadow: none; }
+    .error { background: #4a1530; color: #ffb3c4; }
+    .privacy { color: var(--dim); font-size: 15px; margin-top: 32px; text-align: center; }
+    .privacy + .privacy { margin-top: 8px; }
+    .privacy a { color: var(--muted); }
+    [hidden] { display: none !important; }
+
+    @media (max-width: 520px) {
+      h1 { font-size: 34px; }
+      .presets { gap: 12px; }
+      .presets b { font-size: 17px; }
+      .presets span { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="px" id="scene"></div>
+
+    <h1>PDF<b>Shock</b></h1>
+    <p class="lede">Your PDF is too heavy. The wizard will fix that. Text and vectors survive the blast.</p>
+
+    <div class="presets">
+      <label class="px"><input type="radio" name="preset" value="HIGH" /><b>Spark</b><span>High quality</span></label>
+      <label class="px"><input type="radio" name="preset" value="BALANCED" checked /><b>Bolt</b><span>Balanced</span></label>
+      <label class="px"><input type="radio" name="preset" value="SMALL" /><b>Smite</b><span>Smallest</span></label>
+    </div>
+
+    <label class="drop px" id="drop">
+      <input type="file" id="file" accept="application/pdf" hidden />
+      <strong>Drop a PDF to summon the bolt</strong>
+      <small>or click to pick a file</small>
+    </label>
+
+    <div class="panel px" id="progress" hidden>
+      <div id="status">Loading…</div>
+      <div class="bar"><i id="bar"></i></div>
+    </div>
+
+    <div class="panel px" id="result" hidden>
+      <div class="sizes"><s id="before"></s><span id="after"></span><span class="gain" id="gain"></span></div>
+      <div class="meta" id="meta"></div>
+      <a class="btn" id="download">Download PDF</a>
+    </div>
+
+    <div class="panel px error" id="error" hidden></div>
+
+    <p class="privacy">No upload. The wizard lives in your browser.</p>
+    <p class="privacy">Powered by <a href="https://mupdf.com">MuPDF</a> · <a href="https://github.com/maximethierry29-boop/pdfshock-web">Source code</a> (AGPL-3.0)</p>
+    <p class="privacy">Free, no sign-up. <a href="https://ko-fi.com/maximethierry" target="_blank" rel="noopener">☕ Buy the wizard a coffee</a></p>
+  </main>
+  <script type="module" src="/src/wizard.js"></script>
+</body>
+</html>
