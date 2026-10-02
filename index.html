@@ -28,8 +28,9 @@
       display: flex; justify-content: center; padding: 64px 16px;
     }
     main { width: 100%; max-width: 560px; }
-    h1 { font-size: 32px; margin: 0 0 6px; letter-spacing: -0.02em; }
-    h1 span { color: var(--accent-cyan); }
+    h1 { font-size: 32px; margin: 0 0 6px; letter-spacing: -0.02em; display: flex; align-items: center; gap: 12px; }
+    h1 img { border-radius: 12px; image-rendering: pixelated; }
+    h1 b { color: var(--accent-cyan); }
     .lede { color: var(--text-muted); margin: 0 0 32px; }
     .drop {
       display: block;
@@ -62,13 +63,14 @@
     button:hover, a.btn:hover { background: var(--accent-hover); }
     .error { background: var(--danger-bg); color: var(--danger-text); border-color: transparent; }
     .privacy { color: var(--text-dim); font-size: 13px; margin-top: 24px; text-align: center; }
+    .privacy + .privacy { margin-top: 8px; }
     .privacy a { color: var(--text-muted); }
     [hidden] { display: none !important; }
   </style>
 </head>
 <body>
   <main>
-    <h1>PDF<span>Shock</span></h1>
+    <h1><img src="/logo.png" alt="" width="48" height="48" /><span>PDF<b>Shock</b></span></h1>
     <p class="lede">Shrink heavy PDFs from Figma, Canva or Keynote. Text and vectors stay sharp.</p>
 
     <div class="presets">
@@ -98,6 +100,7 @@
 
     <p class="privacy">Your file never leaves your computer. Everything runs in your browser.</p>
     <p class="privacy">Powered by <a href="https://mupdf.com">MuPDF</a> · <a href="https://github.com/maximethierry29-boop/pdfshock-web">Source code</a> (AGPL-3.0)</p>
+    <p class="privacy">Free, no sign-up. <a href="https://ko-fi.com/maximethierry" target="_blank" rel="noopener">☕ Buy me a coffee</a></p>
   </main>
   <script type="module" src="/src/main.js"></script>
 </body>
