@@ -27,10 +27,10 @@ const input = process.argv[2] ? fs.readFileSync(process.argv[2]) : makeFixture()
 if (!process.argv[2]) fs.writeFileSync("test/fixture.pdf", input);
 for (const preset of ["HIGH", "BALANCED", "SMALL"]) {
   const t = performance.now();
-  const { output, stats, maxSide } = compressPdf(input, preset);
+  const { output, stats } = compressPdf(input, preset);
   fs.writeFileSync(`test/out-${preset}.pdf`, output);
   const mb = (n) => (n / 1e6).toFixed(2) + " Mo";
-  console.log(preset.padEnd(9), mb(input.length), "→", mb(output.length), `${((performance.now() - t) / 1000).toFixed(1)} s`, `cap ${maxSide}px`, JSON.stringify(stats));
+  console.log(preset.padEnd(9), mb(input.length), "→", mb(output.length), `${((performance.now() - t) / 1000).toFixed(1)} s`, JSON.stringify(stats));
 }
 // Le texte doit survivre.
 const check = mupdf.Document.openDocument(fs.readFileSync("test/out-SMALL.pdf"), "application/pdf");

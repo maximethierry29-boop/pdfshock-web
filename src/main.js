@@ -43,6 +43,9 @@ async function handle(file) {
       if (data.step === "images") {
         $("status").textContent = `Compressing images ${data.done + 1} / ${data.total}`;
         $("bar").style.width = `${5 + (90 * data.done) / Math.max(1, data.total)}%`;
+      } else if (data.step === "scanning") {
+        $("status").textContent = "Measuring images…";
+        $("bar").style.width = "4%";
       } else {
         $("status").textContent = "Writing PDF…";
         $("bar").style.width = "96%";
