@@ -63,6 +63,9 @@
     button:hover, a.btn:hover { background: var(--accent-hover); }
     .error { background: var(--danger-bg); color: var(--danger-text); border-color: transparent; }
     .privacy { color: var(--text-dim); font-size: 13px; margin-top: 24px; text-align: center; }
+    .verdict { margin: 0 0 6px; font-weight: 600; }
+    .nudge { display: block; width: fit-content; margin-top: 12px; font-size: 13px; color: var(--text-muted); }
+    .nudge:hover { color: var(--text); }
     .privacy + .privacy { margin-top: 8px; }
     .privacy a { color: var(--text-muted); }
     /* Habillage des marges (pixel art généré par npm run skin) : purement décoratif, fondu vers le centre. */
@@ -102,16 +105,19 @@
     </div>
 
     <div class="panel" id="result" hidden>
+      <p class="verdict" id="verdict"></p>
       <div class="sizes"><s id="before"></s><span id="after"></span><span class="gain" id="gain"></span></div>
       <div class="meta" id="meta"></div>
       <a class="btn" id="download">Download PDF</a>
+      <a class="nudge" id="coffeeNudge" href="https://ko-fi.com/maximethierry" target="_blank" rel="noopener" hidden>Even wizards run on coffee ☕</a>
     </div>
 
     <div class="panel error" id="error" hidden></div>
 
     <p class="privacy">Your file never leaves your computer. Everything runs in your browser.</p>
     <p class="privacy">Powered by <a href="https://mupdf.com">MuPDF</a> · <a href="https://github.com/maximethierry29-boop/pdfshock-web">Source code</a> (AGPL-3.0)</p>
-    <p class="privacy">Free, no sign-up. <a href="https://ko-fi.com/maximethierry" target="_blank" rel="noopener">☕ Buy me a coffee</a></p>
+    <p class="privacy">Free, no sign-up. <a href="https://ko-fi.com/maximethierry" target="_blank" rel="noopener" title="Even wizards run on coffee. Buy me one on Ko-fi">☕ Buy me a coffee</a></p>
+    <p class="privacy">Zapping heavy files since 1492. Also in <a href="https://www.figma.com/community/plugin/1686531654808343365" target="_blank" rel="noopener">Figma</a>.</p>
   </main>
   <script type="module" src="/src/main.js"></script>
 </body>

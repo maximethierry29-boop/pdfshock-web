@@ -4,6 +4,8 @@ const mb = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.round(n / 1
 
 let worker;
 let downloadUrl;
+// Comme dans le plugin : le rappel café n'apparaît qu'une fois par visite, après un export réussi.
+let coffeeNudgeShown = false;
 
 function show(panel) {
   for (const id of ["progress", "result", "error"]) $(id).hidden = id !== panel;
@@ -12,11 +14,12 @@ function show(panel) {
 async function handle(file) {
   if (!file || !/\.pdf$/i.test(file.name)) {
     show("error");
-    $("error").textContent = "Please choose a PDF file.";
+    $("error").textContent = "The wizard needs a target. Drop a PDF.";
     return;
   }
   const preset = document.querySelector("input[name=preset]:checked").value;
   show("progress");
+  $("coffeeNudge").hidden = true;
   $("status").textContent = `Reading ${file.name} (${mb(file.size)})…`;
   $("bar").style.width = "2%";
 
@@ -36,12 +39,12 @@ async function handle(file) {
       done(file, data);
     } else {
       show("error");
-      $("error").textContent = `Could not compress this PDF: ${data.message}`;
+      $("error").textContent = `The spell fizzled: ${data.message}`;
     }
   };
   worker.onerror = (e) => {
     show("error");
-    $("error").textContent = `Compression failed (${e.message || "out of memory?"}).`;
+    $("error").textContent = `The spell fizzled: ${e.message || "this PDF is probably too big for your browser's memory"}.`;
   };
   const buffer = await file.arrayBuffer();
   worker.postMessage({ buffer, preset }, [buffer]);
@@ -56,7 +59,17 @@ function done(file, { output, stats, ms }) {
 
   $("before").textContent = mb(file.size);
   $("after").textContent = `→ ${mb(blob.size)}`;
-  $("gain").textContent = kept ? "already optimized" : `−${Math.round((1 - blob.size / file.size) * 100)}%`;
+  const gain = Math.round((1 - blob.size / file.size) * 100);
+  $("gain").textContent = gain > 0 ? `−${gain}%` : "";
+  // Phrases du sorcier, reprises du plugin (~/pdfshock/store/wizard-lines.md).
+  // Moins de 5 % gagnés : le fichier était déjà léger (ex. un PDF déjà passé dans PDFShock).
+  $("verdict").textContent = gain < 5
+    ? "It was already light, so the wizard saved his energy."
+    : `Zapped to ${mb(blob.size)}. The wizard approves.`;
+  if (!coffeeNudgeShown) {
+    $("coffeeNudge").hidden = false;
+    coffeeNudgeShown = true;
+  }
   $("meta").textContent =
     `${stats.rewritten} of ${stats.images} images recompressed · ${(ms / 1000).toFixed(1)} s` +
     (stats.errors ? ` · ${stats.errors} skipped (errors)` : "");
