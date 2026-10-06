@@ -72,6 +72,8 @@
     .nudge:hover { color: var(--text); }
     .privacy + .privacy { margin-top: 8px; }
     .privacy a { color: var(--text-muted); }
+    /* Logo Figma en SVG inline : la CSP n'autorise que les images du site. */
+    .figma-logo { height: 1em; width: auto; vertical-align: -0.15em; margin-right: 4px; }
     /* Habillage des marges (pixel art généré par npm run skin) : purement décoratif, fondu vers le centre. */
     .skin {
       position: fixed; top: 0; bottom: 0; width: calc(50vw - 330px); z-index: 0; pointer-events: none;
@@ -89,7 +91,7 @@
   <div class="skin skin-right" aria-hidden="true"></div>
   <main>
     <h1><img src="/logo.png" alt="" width="48" height="48" /><span>PDF<b>Shock</b></span></h1>
-    <p class="lede">Shrink heavy PDFs from Figma, Canva or Keynote. Text and vectors stay sharp.</p>
+    <p class="lede">Zapping heavy PDF files since 1492. Also available in Figma.</p>
 
     <div class="presets">
       <label><input type="radio" name="preset" value="HIGH" /><b>High quality</b><span>Print, zoom</span></label>
@@ -123,7 +125,7 @@
     <p class="privacy">Powered by <a href="https://mupdf.com">MuPDF</a> · <a href="https://github.com/maximethierry29-boop/pdfshock-web">Source code</a> (AGPL-3.0)</p>
     <p class="privacy">Free, no sign-up. <a href="https://ko-fi.com/maximethierry" target="_blank" rel="noopener" title="Even wizards run on coffee. Buy me one on Ko-fi">☕ Buy me a coffee</a></p>
     <p class="privacy"><a href="/legal.html">Legal &amp; privacy</a></p>
-    <p class="privacy">Zapping heavy files since 1492. Also in <a href="https://www.figma.com/community/plugin/1686531654808343365" target="_blank" rel="noopener">Figma</a>.</p>
+    <p class="privacy">Zapping heavy files since 1492. Also in <a href="https://www.figma.com/community/plugin/1686531654808343365" target="_blank" rel="noopener"><svg class="figma-logo" viewBox="0 0 38 57" aria-hidden="true"><path fill="#1ABCFE" d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z"/><path fill="#0ACF83" d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z"/><path fill="#FF7262" d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z"/><path fill="#F24E1E" d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z"/><path fill="#A259FF" d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z"/></svg>Figma</a>.</p>
   </main>
   <script type="module" src="/src/main.js"></script>
 </body>

@@ -77,7 +77,8 @@ function done(file, { output, stats, ms }) {
 
   $("before").textContent = mb(file.size);
   $("after").textContent = `→ ${mb(blob.size)}`;
-  const gain = Math.round((1 - blob.size / file.size) * 100);
+  // Plafonné à 99 : un gain de 99,6 % arrondi à « −100% » laisserait croire à un fichier vide.
+  const gain = Math.min(99, Math.round((1 - blob.size / file.size) * 100));
   $("gain").textContent = gain > 0 ? `−${gain}%` : "";
   // Phrases du sorcier, reprises du plugin (~/pdfshock/store/wizard-lines.md).
   // Moins de 5 % gagnés : le fichier était déjà léger (ex. un PDF déjà passé dans PDFShock).
