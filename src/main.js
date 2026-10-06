@@ -6,17 +6,29 @@ let worker;
 let downloadUrl;
 // Comme dans le plugin : le rappel café n'apparaît qu'une fois par visite, après un export réussi.
 let coffeeNudgeShown = false;
+// Fichier choisi mais pas encore compressé : on laisse le temps de régler le preset avant « Zap it ».
+let selected;
 
 function show(panel) {
   for (const id of ["progress", "result", "error"]) $(id).hidden = id !== panel;
 }
 
-async function handle(file) {
+function select(file) {
   if (!file || !/\.pdf$/i.test(file.name)) {
     show("error");
     $("error").textContent = "The wizard needs a target. Drop a PDF.";
     return;
   }
+  selected = file;
+  show(null);
+  $("drop").classList.add("ready");
+  $("dropTitle").textContent = file.name;
+  $("dropHint").textContent = `${mb(file.size)} · click or drop to change`;
+  $("zap").disabled = false;
+}
+
+async function handle(file) {
+  $("zap").disabled = true;
   const preset = document.querySelector("input[name=preset]:checked").value;
   show("progress");
   $("coffeeNudge").hidden = true;
@@ -36,13 +48,16 @@ async function handle(file) {
         $("bar").style.width = "96%";
       }
     } else if (data.type === "done") {
+      $("zap").disabled = false;
       done(file, data);
     } else {
+      $("zap").disabled = false;
       show("error");
       $("error").textContent = `The spell fizzled: ${data.message}`;
     }
   };
   worker.onerror = (e) => {
+    $("zap").disabled = false;
     show("error");
     $("error").textContent = `The spell fizzled: ${e.message || "this PDF is probably too big for your browser's memory"}.`;
   };
@@ -78,12 +93,16 @@ function done(file, { output, stats, ms }) {
   show("result");
 }
 
-$("file").addEventListener("change", (e) => handle(e.target.files[0]));
+$("file").addEventListener("change", (e) => {
+  select(e.target.files[0]);
+  e.target.value = ""; // permet de rechoisir le même fichier
+});
+$("zap").addEventListener("click", () => selected && handle(selected));
 const drop = $("drop");
 drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
 drop.addEventListener("dragleave", () => drop.classList.remove("over"));
 drop.addEventListener("drop", (e) => {
   e.preventDefault();
   drop.classList.remove("over");
-  handle(e.dataTransfer.files[0]);
+  select(e.dataTransfer.files[0]);
 });
