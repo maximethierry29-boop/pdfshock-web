@@ -67,6 +67,10 @@
     .drop.ready strong { overflow-wrap: anywhere; }
     .error { background: var(--danger-bg); color: var(--danger-text); border-color: transparent; }
     .privacy { color: var(--text-dim); font-size: 13px; margin-top: 24px; text-align: center; }
+    .wizard-line { margin: 10px 0 0; font-size: 13px; color: var(--text-muted); font-style: italic; }
+    .game canvas { display: block; width: 100%; aspect-ratio: 160 / 46; image-rendering: pixelated; border-radius: 8px; cursor: pointer; touch-action: manipulation; }
+    .game canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .game-caption { margin: 8px 0 0; font-size: 13px; color: var(--text-muted); text-align: center; }
     .verdict { margin: 0 0 6px; font-weight: 600; }
     .nudge { display: block; width: fit-content; margin-top: 12px; font-size: 13px; color: var(--text-muted); }
     .nudge:hover { color: var(--text); }
@@ -109,6 +113,7 @@
     <div class="panel" id="progress" hidden>
       <div id="status">Loading…</div>
       <div class="bar"><i id="bar"></i></div>
+      <p class="wizard-line" id="wizardLine" aria-live="polite" hidden></p>
     </div>
 
     <div class="panel" id="result" hidden>
@@ -120,6 +125,11 @@
     </div>
 
     <div class="panel error" id="error" hidden></div>
+
+    <div class="panel game" id="game" hidden>
+      <canvas id="gameCanvas" tabindex="0" aria-label="Mini game: the wizard jumps over heavy PDF files. Press Space or tap to jump."></canvas>
+      <p class="game-caption" id="gameCaption"></p>
+    </div>
 
     <p class="privacy">Your file never leaves your computer. Everything runs in your browser.</p>
     <p class="privacy">Powered by <a href="https://mupdf.com">MuPDF</a> · <a href="https://github.com/maximethierry29-boop/pdfshock-web">Source code</a> (AGPL-3.0)</p>

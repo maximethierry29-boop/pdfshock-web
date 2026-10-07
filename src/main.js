@@ -1,3 +1,5 @@
+import { mountGame } from "./game.js";
+
 const $ = (id) => document.getElementById(id);
 // Unités décimales, comme le Finder et le plugin.
 const mb = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.round(n / 1e3)} KB`);
@@ -8,6 +10,41 @@ let downloadUrl;
 let coffeeNudgeShown = false;
 // Fichier choisi mais pas encore compressé : on laisse le temps de régler le preset avant « Zap it ».
 let selected;
+
+// Phrases du sorcier pendant les compressions longues : la première après quelques secondes,
+// puis une nouvelle régulièrement. Même ton que le plugin (store/wizard-lines.md).
+const WAIT_LINES = [
+  "The wizard is charging his staff.",
+  "Big file. The wizard asked for a second coffee.",
+  "Squeezing megabytes through a very small portal.",
+  "Still zapping. Heavy decks take longer to tame.",
+  "He counts every image by hand. He insists.",
+  "Recharging the lightning between two bolts.",
+  "Your attachment limit is about to be very impressed.",
+  "Nothing leaves your computer. The wizard works from home.",
+  "Some of these images have been very heavy for centuries.",
+  "Bored? Jump over a few PDFs below.",
+];
+let waitTimer;
+function startWaitLines() {
+  stopWaitLines();
+  let i = Math.floor(Math.random() * WAIT_LINES.length);
+  const next = () => {
+    $("wizardLine").textContent = WAIT_LINES[i++ % WAIT_LINES.length];
+    $("wizardLine").hidden = false;
+  };
+  waitTimer = setTimeout(function tick() {
+    next();
+    waitTimer = setTimeout(tick, 6000);
+  }, 5000);
+}
+function stopWaitLines() {
+  clearTimeout(waitTimer);
+  $("wizardLine").hidden = true;
+}
+
+// Mini-jeu : visible dès la première compression, il reste jouable une fois le fichier prêt.
+const game = mountGame({ canvas: $("gameCanvas"), caption: $("gameCaption") });
 
 function show(panel) {
   for (const id of ["progress", "result", "error"]) $(id).hidden = id !== panel;
@@ -31,6 +68,9 @@ async function handle(file) {
   $("zap").disabled = true;
   const preset = document.querySelector("input[name=preset]:checked").value;
   show("progress");
+  startWaitLines();
+  $("game").hidden = false;
+  game.focus(); // Espace fait sauter le sorcier au lieu de relancer « Zap it »
   $("coffeeNudge").hidden = true;
   $("status").textContent = `Reading ${file.name} (${mb(file.size)})…`;
   $("bar").style.width = "2%";
@@ -51,15 +91,18 @@ async function handle(file) {
         $("bar").style.width = "96%";
       }
     } else if (data.type === "done") {
+      stopWaitLines();
       $("zap").disabled = false;
       done(file, data);
     } else {
+      stopWaitLines();
       $("zap").disabled = false;
       show("error");
       $("error").textContent = `The spell fizzled: ${data.message}`;
     }
   };
   worker.onerror = (e) => {
+    stopWaitLines();
     $("zap").disabled = false;
     show("error");
     $("error").textContent = `The spell fizzled: ${e.message || "this PDF is probably too big for your browser's memory"}.`;
