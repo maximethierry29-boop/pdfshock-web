@@ -1,14 +1,15 @@
 // Compression d'un PDF existant avec MuPDF : les images trop définies sont réduites puis réencodées
 // en JPEG, le texte et les vecteurs restent intacts (contrairement au plugin, rien n'est aplati).
 import * as mupdf from "mupdf";
+import { zlibSync } from "fflate";
 
 // Résolution cible à la taille réelle d'affichage de chaque image (1 pt = 1/72 po).
-// Balanced = 150 ppi, le niveau de la compression « recommandée » d'iLovePDF.
-// Repère deck Figma (1 pt = 1 px) : 150 ppi ≈ 2× la taille de la slide.
+// Repère deck Figma (1 pt = 1 px) : 72 ppi = la taille de la slide, 110 ppi ≈ 1,5×.
+// High = impression, Balanced = présentation projetée ou écran Retina, Smallest = pièce jointe.
 export const PRESETS = {
-  HIGH: { ppi: 300, jpegQuality: 85 },
-  BALANCED: { ppi: 150, jpegQuality: 80 },
-  SMALL: { ppi: 96, jpegQuality: 65 },
+  HIGH: { ppi: 300, jpegQuality: 85, lossyMasks: false },
+  BALANCED: { ppi: 110, jpegQuality: 80, lossyMasks: true },
+  SMALL: { ppi: 72, jpegQuality: 65, lossyMasks: true },
 };
 
 // Une image plus petite que ce seuil ne vaut pas le coût d'un réencodage.
@@ -33,8 +34,10 @@ export function compressPdf(
   const displayed = measureDisplayedImages(doc);
   stripEditorData(doc);
 
-  // Les masques de transparence (SMask) restent sans perte : un JPEG y crée des halos sur les bords.
-  const masks = new Set();
+  // Masques de transparence (SMask) : traités à part, sans perte (un JPEG crée des halos sur les
+  // bords). On note la clé de l'image qu'ils détourent avant toute réécriture, pour retrouver sa
+  // taille d'affichage.
+  const masks = new Map();
   const images = [];
   const objCount = doc.countObjects();
   for (let num = 1; num < objCount; num++) {
@@ -42,19 +45,22 @@ export function compressPdf(
     if (!obj.isStream()) continue;
     if (obj.get("Subtype").asName?.() !== "Image") continue;
     const smask = obj.get("SMask");
-    if (smask.isIndirect()) masks.add(smask.asIndirect());
+    if (smask.isIndirect()) {
+      const parent = doc.loadImage(obj);
+      masks.set(smask.asIndirect(), imageKey(parent.getWidth(), parent.getHeight(), parent.getNumberOfComponents()));
+      parent.destroy();
+    }
     images.push(num);
   }
 
   const stats = { images: images.length, rewritten: 0, skipped: 0, errors: 0 };
   images.forEach((num, index) => {
     onProgress({ step: "images", done: index, total: images.length });
-    if (masks.has(num)) {
-      stats.skipped++;
-      return;
-    }
     try {
-      if (rewriteImage(doc, num, preset, displayed)) stats.rewritten++;
+      const done = masks.has(num)
+        ? rewriteMask(doc, num, preset, displayed.get(masks.get(num)))
+        : rewriteImage(doc, num, preset, displayed);
+      if (done) stats.rewritten++;
       else stats.skipped++;
     } catch (err) {
       stats.errors++;
@@ -164,6 +170,86 @@ function stripEditorData(doc) {
     const obj = doc.newIndirect(num);
     if (obj.isDictionary() && obj.get("Subtype").asName?.() === "Form") obj.delete("PieceInfo");
   }
+}
+
+// Masque de transparence : réduit à la résolution cible de l'image qu'il détoure, puis stocké en
+// Flate (sans perte). Les masques sont souvent faits d'aplats (0 ou 255) : Flate y bat largement
+// le JPEG 2000 ou le JPEG, sans aucun halo. On compresse réellement avant de choisir : une
+// estimation (taille du PNG, qui profite de ses filtres) sous-évalue le Flate brut.
+function rewriteMask(doc, num, preset, size) {
+  const ref = doc.newIndirect(num);
+  const raw = ref.readRawStream();
+  const original = raw.getLength();
+  raw.destroy();
+  if (original < MIN_IMAGE_BYTES || !size || size.w <= 0 || size.h <= 0) return false;
+
+  const image = doc.loadImage(ref);
+  const pix = image.toPixmap();
+  try {
+    if (pix.getNumberOfComponents() !== 1 || pix.getAlpha()) return false; // masque inattendu : on n'y touche pas
+    const w = pix.getWidth(),
+      h = pix.getHeight();
+    const ratio = Math.min(1, Math.max(preset.ppi / (w / (size.w / 72)), preset.ppi / (h / (size.h / 72))));
+    const resize = ratio < 1 / PPI_TOLERANCE;
+    const nw = resize ? Math.max(1, Math.round(w * ratio)) : w,
+      nh = resize ? Math.max(1, Math.round(h * ratio)) : h;
+    const samples = boxDownsample(pix.getPixels(), w, h, pix.getStride(), nw, nh);
+    let data = zlibSync(samples, { level: 9 }),
+      filter = "FlateDecode";
+    // Hors High quality, un JPEG très fin (q92) est accepté s'il divise vraiment le poids :
+    // à ce niveau, l'adoucissement des bords du détourage reste invisible.
+    if (preset.lossyMasks) {
+      const gray = new mupdf.Pixmap(mupdf.ColorSpace.DeviceGray, [0, 0, nw, nh], false);
+      gray.getPixels().set(samples);
+      const jpeg = gray.asJPEG(92, false);
+      gray.destroy();
+      if (jpeg.length < data.length * 0.6) {
+        data = jpeg;
+        filter = "DCTDecode";
+      }
+    }
+    if (data.length >= original * 0.9) return false;
+
+    ref.writeRawStream(data);
+    ref.put("Filter", doc.newName(filter));
+    ref.put("Width", nw);
+    ref.put("Height", nh);
+    ref.put("BitsPerComponent", 8);
+    ref.put("ColorSpace", doc.newName("DeviceGray"));
+    for (const key of ["DecodeParms", "Decode"]) ref.delete(key);
+    return true;
+  } finally {
+    pix.destroy();
+    image.destroy();
+  }
+}
+
+// Réduction d'un plan de gris par moyenne de zone. Contrairement au rééchantillonnage de MuPDF
+// (warp, prévu pour redresser des perspectives), elle n'ajoute pas de bruit dans les aplats,
+// qui resteraient sinon coûteux à compresser.
+function boxDownsample(src, w, h, stride, nw, nh) {
+  const out = new Uint8Array(nw * nh);
+  if (nw === w && nh === h) {
+    for (let y = 0; y < h; y++) out.set(src.subarray(y * stride, y * stride + w), y * w);
+    return out;
+  }
+  const sx = w / nw,
+    sy = h / nh;
+  for (let y = 0; y < nh; y++) {
+    const y0 = Math.floor(y * sy),
+      y1 = Math.max(y0 + 1, Math.floor((y + 1) * sy));
+    for (let x = 0; x < nw; x++) {
+      const x0 = Math.floor(x * sx),
+        x1 = Math.max(x0 + 1, Math.floor((x + 1) * sx));
+      let sum = 0;
+      for (let yy = y0; yy < y1; yy++) {
+        const row = yy * stride;
+        for (let xx = x0; xx < x1; xx++) sum += src[row + xx];
+      }
+      out[y * nw + x] = Math.round(sum / ((y1 - y0) * (x1 - x0)));
+    }
+  }
+  return out;
 }
 
 function rewriteImage(doc, num, preset, displayed) {

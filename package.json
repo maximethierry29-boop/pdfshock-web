@@ -15,6 +15,7 @@
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "dependencies": {
+    "fflate": "^0.8.3",
     "mupdf": "^1.28.1",
     "vite": "^8.3.2"
   }
