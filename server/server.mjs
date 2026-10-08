@@ -1,4 +1,4 @@
-// Serveur PDFShock (Raspberry Pi, exposé uniquement par le tunnel Cloudflare) :
+// Serveur PDFShock (Raspberry Pi, exposé uniquement par le tunnel Cloudflare sur api.pdfshock.com) :
 // classement du mini-jeu et compteurs anonymes du site. Node seul, sans dépendance.
 // Données dans un fichier JSON (DATA_DIR/db.json), écrit de façon atomique.
 //
