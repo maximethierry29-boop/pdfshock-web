@@ -4,7 +4,7 @@
 const API = import.meta.env.VITE_API_URL || "https://pdfshock-api.maximethierry.fr";
 // On ne compte que sur le site de production : ni en local, ni sur les aperçus de branche
 // Cloudflare Pages (*.pdfshock-web.pages.dev), qui fausseraient les stats. Le classement reste lisible partout.
-const COUNTING = ["pdfshock.maximethierry.fr", "pdfshock-web.pages.dev", "pdfshock.netlify.app"].includes(location.hostname);
+const COUNTING = ["pdfshock.com", "pdfshock-web.pages.dev", "pdfshock.netlify.app"].includes(location.hostname);
 
 async function call(path, body) {
   try {
