@@ -3,3 +3,6 @@ dist/
 test/**/*.pdf
 test/**/*.png
 .DS_Store
+server/data/
+server/.env
+.env*.local

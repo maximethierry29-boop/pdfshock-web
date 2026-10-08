@@ -1,0 +1,13 @@
+# Serveur PDFShock : écoute seulement en local, exposé par le tunnel Cloudflare (aucun port sur la box).
+services:
+  api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5181:5181"
+    environment:
+      HOST: 0.0.0.0
+      DATA_DIR: /data
+    env_file: .env # CF_TEAM et CF_AUD (Cloudflare Access) ; jamais commité
+    volumes:
+      - ./data:/data

@@ -1,4 +1,7 @@
 import { mountGame } from "./game.js";
+import { leaderboard, track } from "./api.js";
+
+track("visit");
 
 const $ = (id) => document.getElementById(id);
 // Unités décimales, comme le Finder et le plugin.
@@ -44,7 +47,13 @@ function stopWaitLines() {
 }
 
 // Mini-jeu : visible dès la première compression, il reste jouable une fois le fichier prêt.
-const game = mountGame({ canvas: $("gameCanvas"), caption: $("gameCaption") });
+const game = mountGame({
+  canvas: $("gameCanvas"),
+  caption: $("gameCaption"),
+  panel: $("game"),
+  leaderboard,
+  onStart: () => track("game"),
+});
 
 function show(panel) {
   for (const id of ["progress", "result", "error"]) $(id).hidden = id !== panel;
@@ -93,7 +102,7 @@ async function handle(file) {
     } else if (data.type === "done") {
       stopWaitLines();
       $("zap").disabled = false;
-      done(file, data);
+      done(file, data, preset);
     } else {
       stopWaitLines();
       $("zap").disabled = false;
@@ -111,10 +120,11 @@ async function handle(file) {
   worker.postMessage({ buffer, preset }, [buffer]);
 }
 
-function done(file, { output, stats, ms }) {
+function done(file, { output, stats, ms }, preset) {
   // Si rien n'a été gagné, on rend l'original plutôt qu'un fichier plus lourd.
   const kept = output.length >= file.size;
   const blob = kept ? file : new Blob([output], { type: "application/pdf" });
+  track("compress", { bytesIn: file.size, bytesOut: blob.size, preset });
   if (downloadUrl) URL.revokeObjectURL(downloadUrl);
   downloadUrl = URL.createObjectURL(blob);
 

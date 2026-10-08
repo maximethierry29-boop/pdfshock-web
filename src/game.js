@@ -1,11 +1,11 @@
 // Mini-jeu d'attente, façon dinosaure de Chrome : le sorcier saute par-dessus des PDF trop lourds.
-// Rendu pixel art dans un canvas basse définition (agrandi sans lissage par le CSS), sans image.
-// Les textes (score, consignes) restent en HTML pour rester nets.
+// Affichage et commandes ici ; la logique (testée par test/game.mjs) vit dans game-core.js.
+// Rendu pixel art dans un canvas basse définition agrandi sans lissage ; textes en HTML.
+import * as G from "./game-core.js";
 
-const W = 160, H = 46, GROUND = 39;
-const GRAVITY = 0.4, JUMP = -4.3; // saut d'environ 23 px, assez pour une tour de deux PDF (20 px)
-const WX = 12; // abscisse fixe du sorcier
 const BEST_KEY = "pdfshock-best";
+const STEP_MS = 1000 / 60;
+const NAME_KEY = "pdfshock-name";
 
 const PALETTE = {
   K: "#05060d", // contour
@@ -39,7 +39,6 @@ const WIZ_LEGS = [
   ["..KK...KK...", "..KK....KK..", "............"],
   ["...KK.KK....", "....KKK.....", "............"],
 ];
-// PDF lourd : 8 × 10 (simple) ; les variantes en empilent ou en alignent plusieurs.
 const DOC = [
   "KKKKKK..",
   "KPPPPKK.",
@@ -64,162 +63,189 @@ function drawSprite(ctx, rows, x, y) {
   });
 }
 
-export function mountGame({ canvas, caption }) {
+const store = {
+  get: (k) => {
+    try {
+      return localStorage.getItem(k);
+    } catch {
+      return null; // navigation privée : rien n'est retenu
+    }
+  },
+  set: (k, v) => {
+    try {
+      localStorage.setItem(k, v);
+    } catch {
+      /* ignoré */
+    }
+  },
+};
+
+// `leaderboard` : { top(): Promise<liste|null>, submit(name, score): Promise<liste|null> }.
+// Une liste null = classement injoignable : le jeu reste jouable, avec le record local.
+export function mountGame({ canvas, caption, panel, leaderboard, onStart = () => {} }) {
   const ctx = canvas.getContext("2d");
-  canvas.width = W;
-  canvas.height = H;
+  canvas.width = G.W;
+  canvas.height = G.H;
+  const $ = (sel) => panel.querySelector(sel);
+  const over = $("#gameOver"), list = $("#scoreList"), form = $("#scoreForm"), nameInput = $("#scoreName");
 
-  let best = 0;
-  try {
-    best = Number(localStorage.getItem(BEST_KEY)) || 0;
-  } catch {
-    /* stockage indisponible (navigation privée) : le record reste en mémoire */
-  }
-
-  // Étoiles fixes, tirées une fois.
-  const stars = Array.from({ length: 22 }, () => [Math.random() * W, Math.random() * (GROUND - 18)]);
+  let best = Number(store.get(BEST_KEY)) || 0;
+  const stars = Array.from({ length: 22 }, () => [Math.random() * G.W, Math.random() * (G.GROUND - 18)]);
 
   let state = "idle"; // idle | running | paused | over
-  let wizard, obstacles, speed, distance, frame, spawnIn, raf;
+  let world = G.newWorld();
+  let raf, last, acc;
+  let finalScore = 0;
 
-  function reset() {
-    wizard = { y: GROUND - 16, vy: 0 };
-    obstacles = [];
-    speed = 1.6;
-    distance = 0;
-    frame = 0;
-    spawnIn = 60;
-  }
-  reset();
-
-  const score = () => Math.floor(distance / 6);
   function updateCaption() {
     const bestText = best ? ` · Best ${best} MB` : "";
     caption.textContent =
       state === "running"
-        ? `${score()} MB zapped${bestText}`
+        ? `${G.score(world)} MB zapped${bestText}`
         : state === "over"
-          ? `The PDF won this round: ${score()} MB${bestText}. Space or tap to retry.`
+          ? `The PDF won this round: ${finalScore} MB${bestText}.`
           : state === "paused"
-            ? `Paused at ${score()} MB. Space or tap to resume.`
-          : `Bored? Press Space or tap to help the wizard jump over heavy PDFs.${bestText}`;
+            ? `Paused at ${G.score(world)} MB. Space or tap to resume.`
+            : `Bored? Press Space or tap to help the wizard jump over heavy PDFs.${bestText}`;
   }
 
-  function spawn() {
-    const kind = Math.random();
-    // Simple, tour de deux PDF, ou paire côte à côte.
-    const parts = kind < 0.55 ? [[0, 0]] : kind < 0.8 ? [[0, 0], [0, -10]] : [[0, 0], [9, 0]];
-    const w = Math.max(...parts.map(([dx]) => dx)) + 8;
-    const h = -Math.min(...parts.map(([, dy]) => dy)) + 10;
-    obstacles.push({ x: W + 4, parts, w, h });
-    spawnIn = 55 + Math.random() * 70 - Math.min(30, distance / 300);
+  function start() {
+    if (state === "over" || state === "idle") {
+      world = G.newWorld();
+      onStart();
+    }
+    over.hidden = true;
+    state = "running";
+    updateCaption();
+    canvas.focus({ preventScroll: true });
+    loop();
   }
 
-  function jump() {
-    if (state !== "running") {
-      if (state === "over") reset(); // en pause, la partie reprend là où elle s'était arrêtée
-      state = "running";
-      updateCaption();
-      loop();
+  function press() {
+    if (state === "running") G.jump(world);
+    else if (state !== "over" || over.hidden || form.hidden) start(); // pendant la saisie du nom, Espace ne relance pas
+  }
+
+  // Tableau des scores : chargé à chaque fin de partie, saisie du nom si le score y entre.
+  function renderList(entries, highlight) {
+    list.innerHTML = "";
+    if (!entries) {
+      list.innerHTML = '<li class="offline">The hall of zappers is offline. Your best stays on this device.</li>';
       return;
     }
-    if (wizard.y >= GROUND - 16) wizard.vy = JUMP;
+    if (!entries.length) list.innerHTML = '<li class="offline">No zapper yet. Be the first.</li>';
+    entries.forEach((e, i) => {
+      const li = document.createElement("li");
+      if (highlight && e.name === highlight.name && e.score === highlight.score) li.className = "me";
+      li.innerHTML = `<span class="rank">${i + 1}</span><span class="name"></span><span class="pts">${e.score} MB</span>`;
+      li.querySelector(".name").textContent = e.name; // texte brut : un nom ne peut pas injecter de HTML
+      list.append(li);
+    });
   }
 
-  function step() {
-    frame++;
-    distance += speed;
-    speed = Math.min(4.2, 1.6 + distance / 2500);
-    wizard.vy += GRAVITY;
-    wizard.y = Math.min(GROUND - 16, wizard.y + wizard.vy);
-    if (wizard.y === GROUND - 16) wizard.vy = 0;
-
-    if (--spawnIn <= 0) spawn();
-    obstacles.forEach((o) => (o.x -= speed));
-    obstacles = obstacles.filter((o) => o.x + o.w > -2);
-
-    // Collision avec une boîte un peu plus petite que le sprite : plus juste à l'œil.
-    const wx0 = WX + 2, wx1 = WX + 10, wy0 = wizard.y + 3, wy1 = wizard.y + 15;
-    for (const o of obstacles) {
-      const ox0 = o.x + 1, ox1 = o.x + o.w - 1, oy0 = GROUND - o.h + 1, oy1 = GROUND;
-      if (wx1 > ox0 && wx0 < ox1 && wy1 > oy0 && wy0 < oy1) {
-        state = "over";
-        if (score() > best) {
-          best = score();
-          try {
-            localStorage.setItem(BEST_KEY, String(best));
-          } catch {
-            /* ignoré */
-          }
-        }
-      }
+  async function gameOver() {
+    finalScore = G.score(world);
+    if (finalScore > best) {
+      best = finalScore;
+      store.set(BEST_KEY, String(best));
+    }
+    updateCaption();
+    form.hidden = true;
+    over.hidden = false;
+    list.innerHTML = '<li class="offline">Loading the hall of zappers…</li>';
+    const entries = await leaderboard.top();
+    renderList(entries);
+    const qualifies = entries && finalScore > 0 && (entries.length < 10 || finalScore > entries[entries.length - 1].score);
+    if (qualifies) {
+      form.hidden = false;
+      nameInput.value = store.get(NAME_KEY) || "";
+      nameInput.focus({ preventScroll: true });
+      nameInput.select();
+    } else {
+      $("#retry").focus({ preventScroll: true });
     }
   }
+
+  nameInput.addEventListener("input", () => {
+    nameInput.value = nameInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
+  });
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = nameInput.value;
+    if (!name) return nameInput.focus();
+    store.set(NAME_KEY, name);
+    form.hidden = true;
+    const entries = await leaderboard.submit(name, finalScore);
+    renderList(entries, { name, score: finalScore });
+    $("#retry").focus({ preventScroll: true });
+  });
+  $("#retry").addEventListener("click", start);
 
   function draw() {
     ctx.fillStyle = "#0a0e1c";
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, 0, G.W, G.H);
     ctx.fillStyle = "#2c3a66";
-    for (const [sx, sy] of stars) ctx.fillRect(Math.round((sx - distance * 0.1 + W * 10) % W), Math.round(sy), 1, 1);
-    // Sol pointillé qui défile.
-    ctx.fillStyle = "#2c3a66";
-    ctx.fillRect(0, GROUND, W, 1);
+    for (const [sx, sy] of stars) ctx.fillRect(Math.round((sx - world.distance * 0.1 + G.W * 10) % G.W), Math.round(sy), 1, 1);
+    ctx.fillRect(0, G.GROUND, G.W, 1);
     ctx.fillStyle = "#202c52";
-    for (let x = -(Math.floor(distance) % 12); x < W; x += 12) ctx.fillRect(x, GROUND + 3, 4, 1);
-    for (let x = -(Math.floor(distance * 1.3) % 19); x < W; x += 19) ctx.fillRect(x + 7, GROUND + 6, 2, 1);
+    for (let x = -(Math.floor(world.distance) % 12); x < G.W; x += 12) ctx.fillRect(x, G.GROUND + 3, 4, 1);
+    for (let x = -(Math.floor(world.distance * 1.3) % 19); x < G.W; x += 19) ctx.fillRect(x + 7, G.GROUND + 5, 2, 1);
 
-    for (const o of obstacles) for (const [dx, dy] of o.parts) drawSprite(ctx, DOC, o.x + dx, GROUND - 10 + dy);
+    for (const o of world.obstacles) for (const [dx, dy] of o.parts) drawSprite(ctx, DOC, o.x + dx, G.GROUND - 10 + dy);
 
-    const onGround = wizard.y >= GROUND - 16;
-    const legs = WIZ_LEGS[onGround && state === "running" ? Math.floor(frame / 6) % 2 : 1];
-    drawSprite(ctx, WIZ_TOP, WX, wizard.y);
-    drawSprite(ctx, legs, WX, wizard.y + WIZ_TOP.length);
+    const legs = WIZ_LEGS[G.onGround(world) && state === "running" ? Math.floor(world.frame / 6) % 2 : 1];
+    drawSprite(ctx, WIZ_TOP, G.WX, world.y);
+    drawSprite(ctx, legs, G.WX, world.y + WIZ_TOP.length);
 
     if (state === "over") {
-      // Petit éclair de défaite au-dessus du sorcier.
-      ctx.fillStyle = "#ffe14d";
-      [[WX + 8, -5], [WX + 7, -4], [WX + 8, -3], [WX + 7, -2]].forEach(([x, y]) => ctx.fillRect(x, Math.round(wizard.y) + y, 1, 1));
+      ctx.fillStyle = "#ffe14d"; // petit éclair de défaite au-dessus du sorcier
+      [[8, -5], [7, -4], [8, -3], [7, -2]].forEach(([x, y]) => ctx.fillRect(G.WX + x, Math.round(world.y) + y, 1, 1));
     }
   }
 
+  // Pas fixe de 1/60 s : même vitesse de jeu sur un écran 60, 120 ou 144 Hz.
   function loop() {
     cancelAnimationFrame(raf);
-    const tick = () => {
-      if (state !== "running") {
-        draw();
-        updateCaption();
-        return;
+    last = performance.now();
+    acc = 0;
+    const tick = (now) => {
+      acc += Math.min(250, now - last);
+      last = now;
+      while (acc >= STEP_MS && state === "running") {
+        G.step(world);
+        acc -= STEP_MS;
+        if (world.over) {
+          state = "over";
+          gameOver();
+        }
       }
-      step();
       draw();
-      if (frame % 10 === 0) updateCaption();
-      raf = requestAnimationFrame(tick);
+      if (state === "running") {
+        if (world.frame % 10 === 0) updateCaption();
+        raf = requestAnimationFrame(tick);
+      }
     };
     raf = requestAnimationFrame(tick);
   }
 
   canvas.addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    canvas.focus();
-    jump();
+    press();
   });
   canvas.addEventListener("keydown", (e) => {
     if (e.code === "Space" || e.code === "ArrowUp") {
       e.preventDefault(); // pas de défilement de page
-      jump();
+      press();
     }
   });
-  // Onglet masqué : pause, pour ne pas perdre la partie en allant voir ailleurs.
   document.addEventListener("visibilitychange", () => {
     if (document.hidden && state === "running") {
-      state = "paused";
-      loop();
+      state = "paused"; // onglet masqué : pause, la partie n'est pas perdue
+      updateCaption();
     }
   });
 
   draw();
   updateCaption();
-  return {
-    focus: () => canvas.focus({ preventScroll: true }),
-  };
+  return { focus: () => canvas.focus({ preventScroll: true }) };
 }
