@@ -2,8 +2,9 @@
 // compteurs anonymes. Aucune donnée personnelle ni contenu de fichier : seulement des totaux.
 // Toute erreur est silencieuse : si le serveur est injoignable, le site fonctionne normalement.
 const API = import.meta.env.VITE_API_URL || "https://pdfshock-api.maximethierry.fr";
-// En local, on ne compte rien (les tests fausseraient les stats) ; le classement reste lisible.
-const COUNTING = !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+// On ne compte que sur le site de production : ni en local, ni sur les aperçus de branche
+// Cloudflare Pages (*.pdfshock.pages.dev), qui fausseraient les stats. Le classement reste lisible partout.
+const COUNTING = ["pdfshock.maximethierry.fr", "pdfshock.pages.dev", "pdfshock.netlify.app"].includes(location.hostname);
 
 async function call(path, body) {
   try {
