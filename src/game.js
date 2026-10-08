@@ -87,7 +87,7 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
   canvas.width = G.W;
   canvas.height = G.H;
   const $ = (sel) => panel.querySelector(sel);
-  const over = $("#gameOver"), list = $("#scoreList"), table = $("#scoreTable"), form = $("#scoreForm");
+  const over = $("#gameOver"), list = $("#scoreList"), table = $("#scoreWrap"), form = $("#scoreForm");
   const nameInput = $("#scoreName"), title = $("#goTitle"), retry = $("#retry");
 
   let best = Number(store.get(BEST_KEY)) || 0;
@@ -134,8 +134,7 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
   const RANK_COLORS = ["#ffe14d", "#ff5c5c", "#ff9f5a", "#ffd1a6", "#ffd1a6", "#ffb3c7", "#6be37a", "#6be37a", "#9fe8ff", "#9fe8ff"];
 
   function showTable(entries, highlight) {
-    title.textContent = "High scores";
-    title.classList.remove("new");
+    title.hidden = true;
     form.hidden = true;
     table.hidden = false;
     list.innerHTML = "";
@@ -154,11 +153,13 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
       tr.cells[2].textContent = e ? e.name : "-----"; // texte brut : un nom ne peut pas injecter de HTML
       list.append(tr);
     });
+    // Seules 5 places sont visibles : on fait défiler jusqu'à la ligne du joueur si elle est plus bas.
+    const me = list.querySelector("tr.me");
+    table.scrollTop = me ? me.offsetTop - list.rows[0].offsetTop : 0;
   }
 
   function showNewHighscore() {
-    title.textContent = "New highscore";
-    title.classList.add("new");
+    title.hidden = false;
     table.hidden = true;
     form.hidden = false;
     $("#goScore").textContent = `${finalScore} MB`;
@@ -178,8 +179,7 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
     over.hidden = false;
     form.hidden = true;
     table.hidden = false;
-    title.textContent = "High scores";
-    title.classList.remove("new");
+    title.hidden = true;
     list.innerHTML = '<tr class="offline"><td colspan="3">Loading…</td></tr>';
     const entries = await leaderboard.top();
     const qualifies = entries && finalScore > 0 && (entries.length < 10 || finalScore > entries[entries.length - 1].score);
