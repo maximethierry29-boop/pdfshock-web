@@ -87,7 +87,8 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
   canvas.width = G.W;
   canvas.height = G.H;
   const $ = (sel) => panel.querySelector(sel);
-  const over = $("#gameOver"), list = $("#scoreList"), form = $("#scoreForm"), nameInput = $("#scoreName");
+  const over = $("#gameOver"), list = $("#scoreList"), table = $("#scoreTable"), form = $("#scoreForm");
+  const nameInput = $("#scoreName"), title = $("#goTitle"), retry = $("#retry");
 
   let best = Number(store.get(BEST_KEY)) || 0;
   const stars = Array.from({ length: 22 }, () => [Math.random() * G.W, Math.random() * (G.GROUND - 18)]);
@@ -115,6 +116,7 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
       onStart();
     }
     over.hidden = true;
+    retry.hidden = true;
     state = "running";
     updateCaption();
     canvas.focus({ preventScroll: true });
@@ -126,21 +128,43 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
     else if (state !== "over" || over.hidden || form.hidden) start(); // pendant la saisie du nom, Espace ne relance pas
   }
 
-  // Tableau des scores : chargé à chaque fin de partie, saisie du nom si le score y entre.
-  function renderList(entries, highlight) {
+  // Tableau des scores façon borne d'arcade : 10 rangs toujours affichés, places vides en tirets,
+  // une couleur par rang (dans le CSS). Un score qui entre dans le top 10 ouvre « New highscore ».
+  const RANKS = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th"];
+  const RANK_COLORS = ["#ffe14d", "#ff5c5c", "#ff9f5a", "#ffd1a6", "#ffd1a6", "#ffb3c7", "#6be37a", "#6be37a", "#9fe8ff", "#9fe8ff"];
+
+  function showTable(entries, highlight) {
+    title.textContent = "High scores";
+    title.classList.remove("new");
+    form.hidden = true;
+    table.hidden = false;
     list.innerHTML = "";
     if (!entries) {
-      list.innerHTML = '<li class="offline">The hall of zappers is offline. Your best stays on this device.</li>';
+      list.innerHTML = '<tr class="offline"><td colspan="3">The hall of zappers is offline. Your best stays on this device.</td></tr>';
       return;
     }
-    if (!entries.length) list.innerHTML = '<li class="offline">No zapper yet. Be the first.</li>';
-    entries.forEach((e, i) => {
-      const li = document.createElement("li");
-      if (highlight && e.name === highlight.name && e.score === highlight.score) li.className = "me";
-      li.innerHTML = `<span class="rank">${i + 1}</span><span class="name"></span><span class="pts">${e.score} MB</span>`;
-      li.querySelector(".name").textContent = e.name; // texte brut : un nom ne peut pas injecter de HTML
-      list.append(li);
+    RANKS.forEach((rank, i) => {
+      const e = entries[i];
+      const tr = document.createElement("tr");
+      tr.style.color = RANK_COLORS[i];
+      if (e && highlight && e.name === highlight.name && e.score === highlight.score) tr.className = "me";
+      tr.innerHTML = "<td></td><td></td><td></td>";
+      tr.cells[0].textContent = rank;
+      tr.cells[1].textContent = e ? String(e.score) : "---";
+      tr.cells[2].textContent = e ? e.name : "-----"; // texte brut : un nom ne peut pas injecter de HTML
+      list.append(tr);
     });
+  }
+
+  function showNewHighscore() {
+    title.textContent = "New highscore";
+    title.classList.add("new");
+    table.hidden = true;
+    form.hidden = false;
+    $("#goScore").textContent = `${finalScore} MB`;
+    nameInput.value = store.get(NAME_KEY) || "";
+    nameInput.focus({ preventScroll: true });
+    nameInput.select();
   }
 
   async function gameOver() {
@@ -150,19 +174,19 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
       store.set(BEST_KEY, String(best));
     }
     updateCaption();
-    form.hidden = true;
+    retry.hidden = false;
     over.hidden = false;
-    list.innerHTML = '<li class="offline">Loading the hall of zappers…</li>';
+    form.hidden = true;
+    table.hidden = false;
+    title.textContent = "High scores";
+    title.classList.remove("new");
+    list.innerHTML = '<tr class="offline"><td colspan="3">Loading…</td></tr>';
     const entries = await leaderboard.top();
-    renderList(entries);
     const qualifies = entries && finalScore > 0 && (entries.length < 10 || finalScore > entries[entries.length - 1].score);
-    if (qualifies) {
-      form.hidden = false;
-      nameInput.value = store.get(NAME_KEY) || "";
-      nameInput.focus({ preventScroll: true });
-      nameInput.select();
-    } else {
-      $("#retry").focus({ preventScroll: true });
+    if (qualifies) showNewHighscore();
+    else {
+      showTable(entries);
+      retry.focus({ preventScroll: true });
     }
   }
 
@@ -174,12 +198,11 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
     const name = nameInput.value;
     if (!name) return nameInput.focus();
     store.set(NAME_KEY, name);
-    form.hidden = true;
     const entries = await leaderboard.submit(name, finalScore);
-    renderList(entries, { name, score: finalScore });
-    $("#retry").focus({ preventScroll: true });
+    showTable(entries, { name, score: finalScore });
+    retry.focus({ preventScroll: true });
   });
-  $("#retry").addEventListener("click", start);
+  retry.addEventListener("click", start);
 
   function draw() {
     ctx.fillStyle = "#0a0e1c";
@@ -247,5 +270,14 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
 
   draw();
   updateCaption();
+  // Développement seulement (retiré du build) : provoque une fin de partie à un score donné,
+  // pour tester le tableau des scores sans jouer.
+  if (import.meta.env.DEV)
+    window.__pdfshockGameOver = (mb) => {
+      world.distance = mb * 6;
+      state = "over";
+      draw();
+      gameOver();
+    };
   return { focus: () => canvas.focus({ preventScroll: true }) };
 }
