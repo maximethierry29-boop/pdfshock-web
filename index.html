@@ -105,16 +105,16 @@
       .game-over { position: static; width: auto; margin-top: 10px; padding: 12px; font-size: 11px; }
     }
     /* Résultat : verdict et tailles à gauche, téléchargement et café à droite. */
+    .status-area { display: grid; margin-top: 16px; }
+    .status-area > .panel { grid-area: 1 / 1; margin-top: 0; }
+    .ghost { visibility: hidden; } /* garde sa place sans s'afficher */
+    .wizard-line.off { visibility: hidden; }
     .result { display: grid; grid-template-columns: 1fr auto; gap: 8px 20px; align-items: start; }
     .result-side { display: flex; flex-direction: column; align-items: center; gap: 12px; align-self: center; }
-    .result-side .nudge { margin: 0; line-height: 20px; }
-    /* Le bouton reste centré dans la hauteur : quand le lien café est affiché dessous, un vide de
-       même hauteur au-dessus équilibre le bloc. */
-    .result-side:has(> .nudge:not([hidden]))::before { content: ""; height: 20px; }
+    .result-side .nudge { margin: 0; }
     @media (max-width: 520px) {
       .result { grid-template-columns: 1fr; }
       .result-side { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
-      .result-side::before { display: none; }
     }
     .verdict { margin: 0 0 6px; font-weight: 600; }
     .nudge { display: block; width: fit-content; margin-top: 12px; font-size: 13px; color: var(--text-muted); }
@@ -160,10 +160,13 @@
     </label>
     <button class="zap" id="zap" disabled>⚡ Zap it</button>
 
+    <!-- Progression, résultat et erreur se superposent dans une même zone : pendant et après une
+         compression, elle garde la hauteur du résultat, et le jeu en dessous ne bouge pas. -->
+    <div class="status-area" id="statusArea" hidden>
     <div class="panel" id="progress" hidden>
       <div id="status">Loading…</div>
       <div class="bar"><i id="bar"></i></div>
-      <p class="wizard-line" id="wizardLine" aria-live="polite" hidden></p>
+      <p class="wizard-line off" id="wizardLine" aria-live="polite">&nbsp;</p>
     </div>
 
     <div class="panel result" id="result" hidden>
@@ -179,6 +182,7 @@
     </div>
 
     <div class="panel error" id="error" hidden></div>
+    </div>
 
     <div class="panel game" id="game" hidden>
       <div class="game-stage">

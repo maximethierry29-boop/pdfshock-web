@@ -34,7 +34,7 @@ function startWaitLines() {
   let i = Math.floor(Math.random() * WAIT_LINES.length);
   const next = () => {
     $("wizardLine").textContent = WAIT_LINES[i++ % WAIT_LINES.length];
-    $("wizardLine").hidden = false;
+    $("wizardLine").classList.remove("off");
   };
   waitTimer = setTimeout(function tick() {
     next();
@@ -43,7 +43,7 @@ function startWaitLines() {
 }
 function stopWaitLines() {
   clearTimeout(waitTimer);
-  $("wizardLine").hidden = true;
+  $("wizardLine").classList.add("off"); // masquée sans libérer sa ligne : rien ne bouge
 }
 
 // Mini-jeu : visible dès la première compression, il reste jouable une fois le fichier prêt.
@@ -55,8 +55,27 @@ const game = mountGame({
   onStart: () => track("game"),
 });
 
+// Une seule zone pour progression, résultat et erreur (superposés en CSS). Une fois le jeu affiché,
+// progression et résultat gardent leur place même masqués (« ghost ») : la zone a toujours la
+// hauteur du résultat, et le jeu en dessous ne bouge pas pendant une partie.
 function show(panel) {
-  for (const id of ["progress", "result", "error"]) $(id).hidden = id !== panel;
+  $("statusArea").hidden = !panel;
+  const reserve = !$("game").hidden;
+  for (const id of ["progress", "result", "error"]) {
+    const keep = reserve && id !== "error";
+    $(id).hidden = id !== panel && !keep;
+    $(id).classList.toggle("ghost", id !== panel && keep);
+  }
+}
+
+// Contenu type du résultat avant la première compression : il donne à la zone sa hauteur finale.
+function placeholderResult() {
+  if ($("verdict").textContent) return;
+  $("verdict").textContent = "Zapped to 0.0 MB. The wizard approves.";
+  $("before").textContent = "000.0 MB";
+  $("after").textContent = "→ 00.0 MB";
+  $("gain").textContent = "−00%";
+  $("meta").textContent = "0 of 0 images recompressed · 0.0 s";
 }
 
 function select(file) {
@@ -76,11 +95,14 @@ function select(file) {
 async function handle(file) {
   $("zap").disabled = true;
   const preset = document.querySelector("input[name=preset]:checked").value;
+  $("game").hidden = false;
+  placeholderResult();
+  // Le lien café n'apparaît qu'au premier résultat : on le prévoit dès maintenant pour que la
+  // hauteur réservée corresponde au résultat final.
+  $("coffeeNudge").hidden = coffeeNudgeShown;
   show("progress");
   startWaitLines();
-  $("game").hidden = false;
   game.focus(); // Espace fait sauter le sorcier au lieu de relancer « Zap it »
-  $("coffeeNudge").hidden = true;
   $("status").textContent = `Reading ${file.name} (${mb(file.size)})…`;
   $("bar").style.width = "2%";
 
