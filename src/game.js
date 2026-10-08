@@ -17,6 +17,7 @@ const PALETTE = {
   B: "#8a5a2b", // bâton
   O: "#9fe8ff", // orbe
   P: "#f1f2f7", X: "#e3242b", g: "#c8cbd8", // PDF
+  T: "#8a93b0", // pierre de la tombe
 };
 
 // 12 × 16, deux images de course (jambes alternées).
@@ -50,6 +51,18 @@ const DOC = [
   "KXXXXXXK",
   "KPPPPPPK",
   "KKKKKKKK",
+];
+
+// Tombe (7 × 8) : marque l'endroit où le sorcier est tombé à la partie précédente de la session.
+const TOMB = [
+  "..KKK..",
+  ".KTTTK.",
+  "KTTKTTK",
+  "KTKKKTK",
+  "KTTKTTK",
+  "KTTTTTK",
+  "KTTTTTK",
+  "KKKKKKK",
 ];
 
 function drawSprite(ctx, rows, x, y) {
@@ -97,6 +110,7 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
   let world = G.newWorld();
   let raf, last, acc;
   let finalScore = 0;
+  let lastDeath = null; // distance où le sorcier est tombé à la partie précédente (session en cours)
 
   function updateCaption() {
     const bestText = best ? ` · Best ${best} MB` : "";
@@ -116,7 +130,6 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
       onStart();
     }
     over.hidden = true;
-    retry.hidden = true;
     state = "running";
     updateCaption();
     canvas.focus({ preventScroll: true });
@@ -156,6 +169,26 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
     // Seules 5 places sont visibles : on fait défiler jusqu'à la ligne du joueur si elle est plus bas.
     const me = list.querySelector("tr.me");
     table.scrollTop = me ? me.offsetTop - list.rows[0].offsetTop : 0;
+    if (me && me.sectionRowIndex < 3) confetti();
+  }
+
+  // Confettis dans le tableau quand le joueur entre sur le podium (1er, 2e ou 3e).
+  function confetti() {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    for (let i = 0; i < 60; i++) {
+      const c = document.createElement("i");
+      c.className = "confetti";
+      c.style.background = RANK_COLORS[i % RANK_COLORS.length];
+      over.append(c);
+      const angle = Math.random() * Math.PI * 2, dist = 50 + Math.random() * 120;
+      c.animate(
+        [
+          { transform: "translate(-50%, -50%) rotate(0deg)", opacity: 1 },
+          { transform: `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist * 0.7 + 60}px) rotate(${Math.random() * 720 - 360}deg)`, opacity: 0 },
+        ],
+        { duration: 1100 + Math.random() * 700, easing: "cubic-bezier(.2,.7,.4,1)", delay: Math.random() * 150 },
+      ).onfinish = () => c.remove();
+    }
   }
 
   function showNewHighscore() {
@@ -175,7 +208,7 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
       store.set(BEST_KEY, String(best));
     }
     updateCaption();
-    retry.hidden = false;
+    lastDeath = world.distance; // la tombe de la prochaine partie
     over.hidden = false;
     form.hidden = true;
     table.hidden = false;
@@ -214,6 +247,11 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
     for (let x = -(Math.floor(world.distance) % 12); x < G.W; x += 12) ctx.fillRect(x, G.GROUND + 3, 4, 1);
     for (let x = -(Math.floor(world.distance * 1.3) % 19); x < G.W; x += 19) ctx.fillRect(x + 7, G.GROUND + 5, 2, 1);
 
+    // La tombe défile avec le décor : elle était sous le sorcier (x = WX) quand distance = lastDeath.
+    if (lastDeath !== null && state !== "over") {
+      const tx = G.WX + 2 + (lastDeath - world.distance);
+      if (tx > -8 && tx < G.W) drawSprite(ctx, TOMB, tx, G.GROUND - TOMB.length);
+    }
     for (const o of world.obstacles) for (const [dx, dy] of o.parts) drawSprite(ctx, DOC, o.x + dx, G.GROUND - 10 + dy);
 
     const legs = WIZ_LEGS[G.onGround(world) && state === "running" ? Math.floor(world.frame / 6) % 2 : 1];
@@ -278,6 +316,11 @@ export function mountGame({ canvas, caption, panel, leaderboard, onStart = () =>
       state = "over";
       draw();
       gameOver();
+    };
+  if (import.meta.env.DEV)
+    window.__pdfshockSeek = (mb) => {
+      world.distance = mb * 6;
+      draw();
     };
   return { focus: () => canvas.focus({ preventScroll: true }) };
 }
