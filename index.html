@@ -14,6 +14,47 @@
   <meta property="og:image" content="https://pdfshock.com/og-cover.jpg" />
   <meta property="og:url" content="https://pdfshock.com/" />
   <meta name="twitter:card" content="summary_large_image" />
+  <!-- Données structurées (schema.org) : ne décrire que ce que la page affiche. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://pdfshock.com/#website",
+        "name": "PDFShock",
+        "url": "https://pdfshock.com/",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "WebApplication",
+        "@id": "https://pdfshock.com/#app",
+        "name": "PDFShock",
+        "url": "https://pdfshock.com/",
+        "description": "Shrink heavy PDFs from Figma, Canva or Keynote. Text and vectors stay sharp. Runs in your browser.",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any (web browser)",
+        "browserRequirements": "Requires JavaScript and WebAssembly",
+        "image": "https://pdfshock.com/og-cover.jpg",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+        "featureList": [
+          "Compresses PDF files entirely in the browser: the file never leaves your computer",
+          "Only images are recompressed: text and vectors stay sharp",
+          "Three presets: High quality, Balanced, Smallest",
+          "Free, no sign-up"
+        ],
+        "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+        "author": { "@type": "Person", "name": "Maxime Thierry" },
+        "isPartOf": { "@id": "https://pdfshock.com/#website" },
+        "sameAs": [
+          "https://github.com/maximethierry29-boop/pdfshock-web",
+          "https://www.figma.com/community/plugin/1686531654808343365"
+        ]
+      }
+    ]
+  }
+  </script>
   <style>
     :root {
       --bg: #0a0e1c; --surface: #121a33; --surface-hover: #16204a;
