@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Figma PDF export too large? How to make it smaller | PDFShock</title>
+  <meta name="description" content="Why Figma PDF exports get so heavy, and three ways to shrink them while keeping text and vectors sharp. Free, and your file never leaves your computer." />
+  <link rel="canonical" href="https://pdfshock.com/figma-pdf-too-large" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Figma PDF export too large? How to make it smaller" />
+  <meta property="og:description" content="Why Figma PDF exports get so heavy, and three ways to shrink them while keeping text and vectors sharp." />
+  <meta property="og:image" content="https://pdfshock.com/og-cover.jpg" />
+  <meta property="og:url" content="https://pdfshock.com/figma-pdf-too-large" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <!-- Page guide SEO/GEO. Texte source : seo/figma-pdf-too-large.md. Le JSON-LD reprend mot pour mot la FAQ affichée. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        "@id": "https://pdfshock.com/figma-pdf-too-large#article",
+        "headline": "Why is my Figma PDF so large, and how do I make it smaller?",
+        "description": "Why Figma PDF exports get so heavy, and three ways to shrink them while keeping text and vectors sharp.",
+        "image": "https://pdfshock.com/og-cover.jpg",
+        "datePublished": "2026-10-09",
+        "dateModified": "2026-10-09",
+        "inLanguage": "en",
+        "author": { "@type": "Person", "name": "Maxime Thierry", "jobTitle": "Designer" },
+        "publisher": { "@type": "Person", "name": "Maxime Thierry" },
+        "mainEntityOfPage": "https://pdfshock.com/figma-pdf-too-large",
+        "about": { "@id": "https://pdfshock.com/#app" },
+        "isPartOf": { "@id": "https://pdfshock.com/#website" }
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://pdfshock.com/figma-pdf-too-large#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Does PDFShock upload my file?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. Compression runs in your browser with MuPDF, compiled to WebAssembly. The PDF never leaves your computer. The site only counts anonymous events, such as file size before and after, with no file content." }
+          },
+          {
+            "@type": "Question",
+            "name": "Will my text stay selectable?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. On pdfshock.com only images are recompressed, so text and vectors are untouched. With the Figma plugin, text stays selectable and searchable too." }
+          },
+          {
+            "@type": "Question",
+            "name": "Are CMYK colors kept?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes, on pdfshock.com: CMYK images and their ICC color profiles are kept as they are. The Figma plugin exports in RGB, like Figma itself." }
+          },
+          {
+            "@type": "Question",
+            "name": "My PDF has almost no images. Will it get smaller?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Not by much. PDFShock recompresses images and removes leftover editor data. A PDF made mostly of text and vectors is already light." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is it free?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes, with no sign-up and no account. If it saves you time, you can buy me a coffee on Ko-fi. It's optional and unlocks nothing." }
+          },
+          {
+            "@type": "Question",
+            "name": "Website or plugin, which one?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Use the plugin when you export from Figma: the PDF comes out light from the start. Use the website when you already have a heavy PDF, from Figma or any other tool." }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+  <style>
+    :root {
+      --bg: #0a0e1c; --surface: #121a33; --border: #2c3a66; --border-soft: #202c52;
+      --text: #e7ecfb; --text-muted: #93a0c9; --text-dim: #5c6690;
+      --accent: #4f9dff; --accent-hover: #6babff; --accent-cyan: #9fe8ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: radial-gradient(ellipse at top, #121a3a, var(--bg) 60%);
+      color: var(--text-muted); font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+      display: flex; justify-content: center; padding: 48px 16px 64px;
+    }
+    main { width: 100%; max-width: 680px; }
+    a { color: var(--accent-cyan); }
+    .home { display: inline-flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-weight: 700; font-size: 18px; }
+    .home img { border-radius: 8px; image-rendering: pixelated; }
+    .home b { color: var(--accent-cyan); }
+    h1 { color: var(--text); font-size: 34px; line-height: 1.2; letter-spacing: -0.02em; margin: 40px 0 10px; }
+    h2 { color: var(--text); font-size: 22px; letter-spacing: -0.01em; margin: 48px 0 12px; }
+    h3 { color: var(--text); font-size: 17px; margin: 28px 0 8px; }
+    p, ul { margin: 0 0 16px; }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 6px; }
+    strong { color: var(--text); }
+    .byline { color: var(--text-dim); font-size: 14px; margin-bottom: 28px; }
+    .answer { background: var(--surface); border: 1px solid var(--border-soft); border-radius: 14px; padding: 18px 20px; color: var(--text); }
+    .table-wrap { overflow-x: auto; margin: 0 0 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
+    th { color: var(--text); font-weight: 600; border-bottom-color: var(--border); }
+    td:first-child { color: var(--text); }
+    .cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 48px 0 0; }
+    .btn {
+      border-radius: 10px; padding: 12px 18px; font-weight: 600; text-decoration: none;
+      background: var(--accent); color: #fff;
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn.ghost:hover { background: var(--surface); }
+    footer { margin-top: 56px; color: var(--text-dim); font-size: 13px; }
+    footer a { color: var(--text-muted); }
+    @media (max-width: 520px) { h1 { font-size: 28px; } h2 { font-size: 20px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="home" href="/"><img src="/logo.png" alt="" width="32" height="32" /><span>PDF<b>Shock</b></span></a>
+
+    <article>
+      <h1>Why is my Figma PDF so large, and how do I make it smaller?</h1>
+      <p class="byline">By Maxime Thierry, designer and maker of PDFShock. Updated <time datetime="2026-10-09">October 9, 2026</time>.</p>
+
+      <p class="answer"><strong>Short answer.</strong> A heavy Figma PDF almost always comes from its images. Photos and screenshots are stored with far more pixels than the page shows. To shrink the file, recompress only those images and leave text and vectors alone. PDFShock does it in your browser, for free, and your file never leaves your computer.</p>
+
+      <h2>Where the weight comes from</h2>
+      <p>A Figma PDF holds two kinds of content.</p>
+      <ul>
+        <li><strong>Text and vector shapes.</strong> They describe forms with math, so they stay light and sharp at any zoom.</li>
+        <li><strong>Images.</strong> Photos, screenshots and image fills are grids of pixels. A photo dropped into a frame often keeps far more pixels than the frame needs, and a deck with dozens of them adds up fast.</li>
+      </ul>
+      <p>That is why a text-heavy document exports light, while an image-heavy pitch deck can reach tens of megabytes. Too heavy to email, slow to open, rejected by upload limits.</p>
+
+      <h2>Three ways to make it smaller</h2>
+
+      <h3>1. Compress the PDF you already exported</h3>
+      <p>Drop the file on <a href="/">pdfshock.com</a>, pick a preset and click Zap it.</p>
+      <ul>
+        <li>Only images are recompressed. Text stays selectable and searchable, vectors stay vectors.</li>
+        <li>CMYK images and ICC color profiles are kept, so print colors do not shift.</li>
+        <li>Everything runs in your browser. The PDF is never uploaded to a server.</li>
+      </ul>
+      <p>It works with PDFs from Figma, and also from Canva, Keynote or any other tool.</p>
+
+      <h3>2. Export a light PDF straight from Figma</h3>
+      <p>The <a href="https://www.figma.com/community/plugin/1686531654808343365">PDFShock plugin</a> replaces Figma's PDF export. Select your frames or slides, pick a preset, export.</p>
+      <p>Measured on a 48-slide, image-heavy deck:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Export</th><th>File size</th></tr></thead>
+          <tbody>
+            <tr><td>Figma native PDF export</td><td>88.2 MB</td></tr>
+            <tr><td>PDFShock plugin, Balanced</td><td>16.5 MB (81% lighter)</td></tr>
+            <tr><td>PDFShock plugin, Smallest file</td><td>7.1 MB (92% lighter)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Text stays selectable and searchable, and links stay clickable.</p>
+
+      <h3>3. Shrink images before they reach the PDF</h3>
+      <p>Before placing a photo in Figma, resize it to roughly the size it will be shown at. It takes more time, and you have to repeat it each time an image changes, but the native export gets lighter.</p>
+
+      <h2>Which preset should I choose?</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Preset</th><th>Image resolution</th><th>Best for</th></tr></thead>
+          <tbody>
+            <tr><td>High quality</td><td>up to 300 ppi</td><td>Print, zooming in on details</td></tr>
+            <tr><td>Balanced</td><td>up to 110 ppi</td><td>Presentations and sharing on screen</td></tr>
+            <tr><td>Smallest</td><td>up to 72 ppi</td><td>Email attachments, strict upload limits</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Not sure? Start with Balanced. If small text in a screenshot looks soft, try High quality.</p>
+
+      <h2>FAQ</h2>
+      <h3>Does PDFShock upload my file?</h3>
+      <p>No. Compression runs in your browser with MuPDF, compiled to WebAssembly. The PDF never leaves your computer. The site only counts anonymous events, such as file size before and after, with no file content.</p>
+      <h3>Will my text stay selectable?</h3>
+      <p>Yes. On pdfshock.com only images are recompressed, so text and vectors are untouched. With the Figma plugin, text stays selectable and searchable too.</p>
+      <h3>Are CMYK colors kept?</h3>
+      <p>Yes, on pdfshock.com: CMYK images and their ICC color profiles are kept as they are. The Figma plugin exports in RGB, like Figma itself.</p>
+      <h3>My PDF has almost no images. Will it get smaller?</h3>
+      <p>Not by much. PDFShock recompresses images and removes leftover editor data. A PDF made mostly of text and vectors is already light.</p>
+      <h3>Is it free?</h3>
+      <p>Yes, with no sign-up and no account. If it saves you time, you can <a href="https://ko-fi.com/maximethierry">buy me a coffee on Ko-fi</a>. It's optional and unlocks nothing.</p>
+      <h3>Website or plugin, which one?</h3>
+      <p>Use the plugin when you export from Figma: the PDF comes out light from the start. Use the website when you already have a heavy PDF, from Figma or any other tool.</p>
+
+      <div class="cta">
+        <a class="btn" href="/">⚡ Compress a PDF now</a>
+        <a class="btn ghost" href="https://www.figma.com/community/plugin/1686531654808343365">Get the Figma plugin</a>
+      </div>
+    </article>
+
+    <footer>
+      <p>Powered by <a href="https://mupdf.com">MuPDF</a> · <a href="https://github.com/maximethierry29-boop/pdfshock-web">Source code</a> (AGPL-3.0) · <a href="/legal">Legal &amp; privacy</a></p>
+    </footer>
+  </main>
+</body>
+</html>

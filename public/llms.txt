@@ -16,11 +16,12 @@
 
 - [PDFShock on Figma Community](https://www.figma.com/community/plugin/1686531654808343365): exports frames and slides from Figma Design and Figma Slides as a light PDF, with no network access.
 - Measured on a 48-slide, image-heavy deck: 88.2 MB with Figma's native PDF export, 16.5 MB with the Balanced preset (81% lighter), 7.1 MB with Smallest file (92% lighter).
-- Keeps selectable, searchable text and clickable links. Also exports PNG, JPG, WEBP, animated GIF and .webm.
+- Keeps selectable, searchable text and clickable links. Exports in RGB, like Figma itself (CMYK preservation applies to the web app). Also exports PNG, JPG, WEBP, animated GIF and .webm.
 
 ## Links
 
 - [PDFShock web app](https://pdfshock.com/): compress an existing PDF in the browser
+- [Why is my Figma PDF so large, and how do I make it smaller?](https://pdfshock.com/figma-pdf-too-large): causes, three fixes, presets and FAQ
 - [Source code](https://github.com/maximethierry29-boop/pdfshock-web): AGPL-3.0
 - [Legal and privacy](https://pdfshock.com/legal)
 
