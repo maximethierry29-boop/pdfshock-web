@@ -26,7 +26,7 @@ A Figma PDF holds two kinds of content.
 - **Text and vector shapes.** They describe forms with math, so they stay light and sharp at any zoom.
 - **Images.** Photos, screenshots and image fills are grids of pixels. A photo dropped into a frame often keeps far more pixels than the frame needs, and a deck with dozens of them adds up fast.
 
-That is why a text-heavy document exports light, while an image-heavy pitch deck can reach tens of megabytes. Too heavy to email, slow to open, rejected by upload limits.
+That is why a text-heavy document exports light, while an image-heavy pitch deck can reach tens of megabytes. At that size the file is slow to open, too heavy to email and often over upload limits.
 
 ## Three ways to make it smaller
 
