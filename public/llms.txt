@@ -1,0 +1,30 @@
+# PDFShock
+
+> PDFShock compresses heavy PDF files directly in the browser. Only images are recompressed: text and vectors stay sharp, and the file never leaves the user's computer. It is made for designers whose PDFs exported from Figma, Canva or Keynote are too large to email or upload. Free, no sign-up, open source (AGPL-3.0). Also available as a Figma plugin.
+
+## How it works
+
+- Drop a PDF on https://pdfshock.com, pick a preset, click "Zap it", download the lighter file.
+- Compression runs locally with MuPDF (WebAssembly in a Web Worker). The PDF is never uploaded or stored on a server.
+- Only images are recompressed. Text stays selectable and searchable, vectors stay vectors.
+- CMYK images and ICC color profiles are kept, so colors do not shift for print.
+- Editor data embedded by design tools is removed.
+- Presets: High quality (images up to 300 ppi, for print and zoom), Balanced (110 ppi, for presentations on screen), Smallest (72 ppi, for email attachments).
+- No account, no cookies. Only anonymous counters (visit, compression sizes, preset, game played) are sent, with no file content.
+
+## Figma plugin
+
+- [PDFShock on Figma Community](https://www.figma.com/community/plugin/1686531654808343365): exports frames and slides from Figma Design and Figma Slides as a light PDF, with no network access.
+- Measured on a 48-slide, image-heavy deck: 88.2 MB with Figma's native PDF export, 16.5 MB with the Balanced preset (81% lighter), 7.1 MB with Smallest file (92% lighter).
+- Keeps selectable, searchable text and clickable links. Also exports PNG, JPG, WEBP, animated GIF and .webm.
+
+## Links
+
+- [PDFShock web app](https://pdfshock.com/): compress an existing PDF in the browser
+- [Source code](https://github.com/maximethierry29-boop/pdfshock-web): AGPL-3.0
+- [Legal and privacy](https://pdfshock.com/legal)
+
+## Optional
+
+- Made by Maxime Thierry, a designer in France. Contact: plugins@maximethierry.fr
+- A pixel-art wizard mini-game runs while the file compresses.
