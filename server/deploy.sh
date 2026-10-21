@@ -3,5 +3,5 @@
 set -e
 cd "$(dirname "$0")"
 ssh rby 'mkdir -p ~/apps/pdfshock-api/data && touch ~/apps/pdfshock-api/.env'
-scp server.mjs Dockerfile compose.yml rby:~/apps/pdfshock-api/
+scp server.mjs weekly-report.mjs Dockerfile compose.yml rby:~/apps/pdfshock-api/
 ssh rby 'cd ~/apps/pdfshock-api && docker compose up -d --build && sleep 2 && curl -fsS http://127.0.0.1:5181/health'
